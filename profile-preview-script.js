@@ -1650,32 +1650,12 @@ function cleanupPreviewData() {
   console.log("Preview data cleaned up from localStorage");
 }
 
-// Function to handle preview exit with user confirmation
-window.exitPreview = function () {
-  if (
-    confirm(
-      "Are you sure you want to exit the preview? This will return you to the profile editor."
-    )
-  ) {
-    cleanupPreviewData();
-    // Redirect back to profile editor or close window
-    window.history.back();
-  }
-};
-
 // Add exit preview button functionality if it exists
 document.addEventListener("DOMContentLoaded", function () {
   const exitButton = document.getElementById("exit-preview-btn");
   if (exitButton) {
-    exitButton.addEventListener("click", window.exitPreview);
+    exitButton.addEventListener("click", cleanupPreviewData());
   }
-
-  // Add ESC key listener to exit preview
-  document.addEventListener("keydown", function (event) {
-    if (event.key === "Escape") {
-      window.exitPreview();
-    }
-  });
 });
 
 // Check if we're in preview mode
@@ -1708,7 +1688,6 @@ function showPreviewBanner() {
   previewBanner.id = "preview-banner";
   previewBanner.innerHTML = `
     <span>🔍 PREVIEW MODE - This is a preview of your profile</span>
-    <button onclick="window.exitPreview()">Exit Preview</button>
   `;
 
   document.body.insertBefore(previewBanner, document.body.firstChild);
@@ -1733,7 +1712,7 @@ function addBannerCSS() {
   style.textContent = `
     #preview-banner {
       position: fixed !important;
-      top: 0 !important;
+      bottom: 0 !important;
       left: 0 !important;
       right: 0 !important;
       width: 100% !important;
