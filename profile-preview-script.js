@@ -7,784 +7,869 @@ document.addEventListener("DOMContentLoaded", function () {
 
 document.addEventListener("DOMContentLoaded", async function () {
   console.log("DOM fully loaded and parsed");
-  console.log("testyyyssasasa");
-  let thepageparams = new URLSearchParams(window.location.search);
-  let lawyerId = thepageparams.get("id");
+  console.log("Preview mode loading...");
 
-  if (lawyerId != null && lawyerId != "") {
-    let lawyerstring = lawyerId.toString();
-    let thisUser = await getUserById(lawyerstring);
-    let blogs = await fetchBlogByCreator(lawyerstring);
-    let blogParse1 = JSON.parse(blogs);
-    let blogBody = blogParse1.data.body;
-    let blogsJson = JSON.parse(JSON.parse(blogBody));
-    console.log("🦙🦙🦙😂", blogsJson);
+  // Show preview banner
+  showPreviewBanner();
 
-    if (thisUser != "error") {
-      if (thisUser != "error") {
-        // Create a promise to handle all profile configurations
-        const setupProfile = new Promise(async (resolve, reject) => {
-          let parseonce = JSON.parse(thisUser);
-          console.log("parsed data:", parseonce);
-          let body = parseonce.data.body;
+  // Get preview data from localStorage
+  const previewData = localStorage.getItem("lawggle_profile_preview");
 
-          let parsedBody = JSON.parse(JSON.parse(body));
-          console.log(parsedBody, "🧑🏿‍❤️‍💋‍🧑🏾🧑🏿‍❤️‍💋‍🧑🏾🧑🏿‍❤️‍💋‍🧑🏾🥪🥪", parsedBody["profile image"]);
-          let imageurl = parsedBody["profile image"];
-          if (imageurl != null && imageurl != "" && !imageurl != undefined) {
-            let imagecontainer = document.getElementById(
-              "theprofileimagecontainer"
-            );
-            imagecontainer.style.backgroundImage = `url(${imageurl})`;
-            imagecontainer.style.backgroundSize = "cover";
-            imagecontainer.style.backgroundPosition = "center";
-            imagecontainer.style.backgroundRepeat = "no-repeat";
+  if (previewData) {
+    try {
+      const parsedBody = JSON.parse(previewData);
+      console.log("Preview data loaded:", parsedBody);
+
+      // Create a promise to handle all profile configurations
+      const setupProfile = new Promise(async (resolve, reject) => {
+        console.log("Setting up profile with preview data:", parsedBody);
+        let imageurl = parsedBody["profile image"];
+        if (imageurl != null && imageurl != "" && imageurl != undefined) {
+          let imagecontainer = document.getElementById(
+            "theprofileimagecontainer"
+          );
+          imagecontainer.style.backgroundImage = `url(${imageurl})`;
+          imagecontainer.style.backgroundSize = "cover";
+          imagecontainer.style.backgroundPosition = "center";
+          imagecontainer.style.backgroundRepeat = "no-repeat";
+        }
+
+        document.getElementById("NameText").innerText = parsedBody["name"];
+
+        const firmUrl = parsedBody["firm url"];
+
+        if (firmUrl != null && firmUrl != undefined && firmUrl != "") {
+          // Capitalize first letter of the displayed URL
+          let displayUrl =
+            firmUrl.length > 22 ? firmUrl.substring(0, 22) + "..." : firmUrl;
+          displayUrl = displayUrl.charAt(0).toUpperCase() + displayUrl.slice(1);
+
+          document.getElementById("thefirmurl").innerText = displayUrl;
+
+          let firmFullUrl = firmUrl.startsWith("http")
+            ? firmUrl
+            : "https://" + firmUrl;
+          document.getElementById("thefirmurl").href = firmFullUrl;
+        } else {
+          document.getElementById("thefirmurl").style.display = "none";
+        }
+
+        let minrate = parsedBody["min hourly rate"];
+        let maxrate = parsedBody["max hourly rate"];
+        let ratecombined;
+
+        if (!minrate && !maxrate) {
+          // Neither rate available - show "N/A"
+          document.getElementById("hourly-rate-section").style.display = "none";
+        } else {
+          if (minrate && maxrate) {
+            // Both rates available - show range
+            ratecombined = `${minrate} - ` + `${maxrate}/Hour`;
+          } else if (minrate) {
+            // Only min rate available
+            ratecombined = `${minrate}/Hour`;
+          } else if (maxrate) {
+            // Only max rate available
+            ratecombined = `${maxrate}/Hour`;
           }
 
-          document.getElementById("NameText").innerText = parsedBody["name"];
+          document.getElementById("hourly-rate-text").innerText = ratecombined;
+          document.getElementById("hourly-rate-section").style.display = "flex";
+        }
 
-          const firmUrl = parsedBody["firm url"];
-
-          if (firmUrl != null && firmUrl != undefined && firmUrl != "") {
-            // Capitalize first letter of the displayed URL
-            let displayUrl =
-              firmUrl.length > 22 ? firmUrl.substring(0, 22) + "..." : firmUrl;
-            displayUrl =
-              displayUrl.charAt(0).toUpperCase() + displayUrl.slice(1);
-
-            document.getElementById("thefirmurl").innerText = displayUrl;
-
-            let firmFullUrl = firmUrl.startsWith("http")
-              ? firmUrl
-              : "https://" + firmUrl;
-            document.getElementById("thefirmurl").href = firmFullUrl;
-          } else {
-            document.getElementById("thefirmurl").style.display = "none";
+        let bannerimage = parsedBody["profile banner"];
+        console.log("🥪🥪🔷", bannerimage);
+        let thebannercontainer = document.getElementById("bannercontainer");
+        if (
+          bannerimage != null &&
+          bannerimage != "" &&
+          bannerimage != undefined
+        ) {
+          thebannercontainer.style.backgroundImage = `url(${bannerimage})`;
+          thebannercontainer.style.backgroundSize = "cover";
+          thebannercontainer.style.backgroundPosition = "center";
+          thebannercontainer.style.backgroundRepeat = "no-repeat";
+        } else {
+          if (window.innerWidth >= 768) {
+            // Apply only if screen width is tablet or larger
+            thebannercontainer.style.height = "12rem";
+            document.getElementById("profile-img-main-container").style.bottom =
+              "-40%";
           }
+        }
 
-          let minrate = parsedBody["min hourly rate"];
-          let maxrate = parsedBody["max hourly rate"];
-          let ratecombined;
+        let theLawyeraddress = parsedBody["address"];
+        console.log(theLawyeraddress);
 
-          if (!minrate && !maxrate) {
-            // Neither rate available - show "N/A"
-            document.getElementById("hourly-rate-section").style.display =
-              "none";
-          } else {
-            if (minrate && maxrate) {
-              // Both rates available - show range
-              ratecombined = `${minrate} - ` + `${maxrate}/Hour`;
-            } else if (minrate) {
-              // Only min rate available
-              ratecombined = `${minrate}/Hour`;
-            } else if (maxrate) {
-              // Only max rate available
-              ratecombined = `${maxrate}/Hour`;
-            }
+        if (
+          theLawyeraddress != null &&
+          theLawyeraddress != undefined &&
+          theLawyeraddress != ""
+        ) {
+          let theaddressLong = theLawyeraddress.long;
+          let theaddressLat = theLawyeraddress.lat;
 
-            document.getElementById("hourly-rate-text").innerText =
-              ratecombined;
-            document.getElementById("hourly-rate-section").style.display =
-              "flex";
-          }
-
-          let bannerimage = parsedBody["profile banner"];
-          console.log("🥪🥪🔷", bannerimage);
-          let thebannercontainer = document.getElementById("bannercontainer");
-          if (
-            bannerimage != null &&
-            bannerimage != "" &&
-            bannerimage != undefined
-          ) {
-            thebannercontainer.style.backgroundImage = `url(${bannerimage})`;
-            thebannercontainer.style.backgroundSize = "cover";
-            thebannercontainer.style.backgroundPosition = "center";
-            thebannercontainer.style.backgroundRepeat = "no-repeat";
-          } else {
-            if (window.innerWidth >= 768) {
-              // Apply only if screen width is tablet or larger
-              thebannercontainer.style.height = "12rem";
-              document.getElementById(
-                "profile-img-main-container"
-              ).style.bottom = "-40%";
-            }
-          }
-
-          let theLawyeraddress = parsedBody["address"];
-          console.log(theLawyeraddress);
-
-          if (
-            theLawyeraddress != null &&
-            theLawyeraddress != undefined &&
-            theLawyeraddress != ""
-          ) {
-            let theaddressLong = theLawyeraddress.long;
-            let theaddressLat = theLawyeraddress.lat;
-
-            if (theaddressLat && theaddressLong) {
-              map = await mapBoxMap(theaddressLat, theaddressLong);
-            } else {
-              document.getElementById("sectionmap").style.display = "none";
-            }
+          if (theaddressLat && theaddressLong) {
+            map = await mapBoxMap(theaddressLat, theaddressLong);
           } else {
             document.getElementById("sectionmap").style.display = "none";
           }
+        } else {
+          document.getElementById("sectionmap").style.display = "none";
+        }
 
-          let socialMedias = parsedBody["social media"];
-          let twitterLink = socialMedias[0].url;
-          let linkedinLink = socialMedias[1].url;
-          let facebookLink = socialMedias[2].url;
-          let instagramLink = socialMedias[3].url;
+        let socialMedias = parsedBody["social media"];
+        let twitterLink = socialMedias[0].url;
+        let linkedinLink = socialMedias[1].url;
+        let facebookLink = socialMedias[2].url;
+        let instagramLink = socialMedias[3].url;
 
-          if (
-            twitterLink == "" &&
-            linkedinLink == "" &&
-            facebookLink == "" &&
-            instagramLink == ""
-          ) {
-            document.getElementById("socialmediahold").style.display = "none";
-            document.getElementById("social-media-section").style.display =
-              "none";
+        if (
+          twitterLink == "" &&
+          linkedinLink == "" &&
+          facebookLink == "" &&
+          instagramLink == ""
+        ) {
+          document.getElementById("socialmediahold").style.display = "none";
+          document.getElementById("social-media-section").style.display =
+            "none";
+        }
+
+        if (
+          twitterLink != null &&
+          twitterLink != "" &&
+          twitterLink != undefined
+        ) {
+          document.getElementById("socialmediahold").style.display = "flex";
+          let twittergo = document.getElementById("xlink");
+          twittergo.href = twitterLink;
+          twittergo.style.display = "block";
+        } else {
+          document.getElementById("xlink").style.display = "none";
+        }
+
+        if (
+          linkedinLink != null &&
+          linkedinLink != "" &&
+          linkedinLink != undefined
+        ) {
+          document.getElementById("socialmediahold").style.display = "flex";
+          let linkedingo = document.getElementById("linkedinlink");
+          linkedingo.href = linkedinLink;
+          linkedingo.style.display = "block";
+        } else {
+          document.getElementById("linkedinlink").style.display = "none";
+        }
+
+        if (
+          facebookLink != null &&
+          facebookLink != "" &&
+          facebookLink != undefined
+        ) {
+          document.getElementById("socialmediahold").style.display = "flex";
+          let facebookgo = document.getElementById("facebooklink");
+          facebookgo.href = facebookLink;
+          facebookgo.style.display = "block";
+        } else {
+          document.getElementById("facebooklink").style.display = "none";
+        }
+
+        if (
+          instagramLink != null &&
+          instagramLink != "" &&
+          instagramLink != undefined
+        ) {
+          document.getElementById("socialmediahold").style.display = "flex";
+          let instagramgo = document.getElementById("instagramlink");
+          instagramgo.href = instagramLink;
+          instagramgo.style.display = "block";
+        } else {
+          document.getElementById("instagramlink").style.display = "none";
+        }
+
+        let freeconsult = parsedBody["free consultation"];
+        if (
+          freeconsult == null ||
+          freeconsult == undefined ||
+          freeconsult == ""
+        ) {
+          freeconsult = "yes";
+        }
+
+        let probono = parsedBody["community pro bono work"];
+        if (probono == null || probono == undefined || probono == "") {
+          probono = "yes";
+        }
+
+        let contingency = parsedBody["offer contingency"];
+        if (
+          contingency == null ||
+          contingency == undefined ||
+          contingency == ""
+        ) {
+          contingency = "yes";
+        }
+
+        if (freeconsult == "yes") {
+          document.getElementById("free-consult-yes").style.display = "flex";
+          document.getElementById("free-consult-no").style.display = "none";
+        } else {
+          document.getElementById("free-consult-yes").style.display = "none";
+          document.getElementById("free-consult-no").style.display = "flex";
+        }
+
+        if (probono == "yes") {
+          document.getElementById("cpbw-yes").style.display = "flex";
+          document.getElementById("cpbw-no").style.display = "none";
+        } else {
+          document.getElementById("cpbw-yes").style.display = "none";
+          document.getElementById("cpbw-no").style.display = "flex";
+        }
+
+        if (contingency == "yes") {
+          document.getElementById("offer-cg-yes").style.display = "flex";
+          document.getElementById("offer-cg-no").style.display = "none";
+        } else {
+          document.getElementById("offer-cg-yes").style.display = "none";
+          document.getElementById("offer-cg-no").style.display = "flex";
+        }
+
+        // To do
+        // document.getElementById("freeconsultation-large-s").innerText =
+        //   freeconsult;
+        // document.getElementById("freeconsultation-mobile").innerText =
+        //   freeconsult;
+        // document.getElementById("probono-large-s").innerText = probono;
+        // document.getElementById("probono-mobile").innerText = probono;
+        // document.getElementById("offercontingency-large-s").innerText =
+        //   contingency;
+        // document.getElementById("offercontingency-mobile").innerText =
+        //   contingency;
+
+        const expertholderLargeS = document.getElementById(
+          "expertisewrap-large-s"
+        );
+        expertholderLargeS.innerHTML = "";
+        const expertholderMobile = document.getElementById(
+          "expertisewrap-mobile"
+        );
+        expertholderMobile.innerHTML = "";
+
+        let theexpertise = parsedBody["area of expertise"];
+        if (theexpertise.length > 0) {
+          for (let eachexpertise in theexpertise) {
+            const expertcontainer = document.createElement("div");
+            expertcontainer.classList.add("expertisecontainer");
+            let expertText = theexpertise[eachexpertise];
+            expertcontainer.innerText = capitalizeWords(expertText);
+
+            const expertContainerClone = expertcontainer.cloneNode(true);
+            expertholderLargeS.append(expertcontainer);
+            expertholderMobile.append(expertContainerClone);
           }
+        } else {
+          document.getElementById(
+            "area-expertise-section-mobile"
+          ).style.display = "none";
+          document.getElementById(
+            "area-expertise-section-large-s"
+          ).style.display = "none";
+        }
 
-          if (
-            twitterLink != null &&
-            twitterLink != "" &&
-            twitterLink != undefined
-          ) {
-            document.getElementById("socialmediahold").style.display = "flex";
-            let twittergo = document.getElementById("xlink");
-            twittergo.href = twitterLink;
-            twittergo.style.display = "block";
-          } else {
-            document.getElementById("xlink").style.display = "none";
+        let thehobbies = parsedBody["interests and hobbies"];
+        let hobbiesContainer = document.getElementById("interestshobbies");
+        hobbiesContainer.innerHTML = "";
+
+        if (
+          thehobbies != null &&
+          thehobbies != undefined &&
+          thehobbies != "" &&
+          thehobbies.length > 0
+        ) {
+          for (let eachhobby in thehobbies) {
+            hobbyholder = document.createElement("div");
+            hobbyholder.classList.add("expertisecontainer");
+            let hobbyText = thehobbies[eachhobby].title;
+            hobbyholder.innerText = capitalizeWords(hobbyText);
+            hobbiesContainer.append(hobbyholder);
           }
+        } else {
+          document.getElementById("interest-hobby-section").style.display =
+            "none";
+        }
 
-          if (
-            linkedinLink != null &&
-            linkedinLink != "" &&
-            linkedinLink != undefined
-          ) {
-            document.getElementById("socialmediahold").style.display = "flex";
-            let linkedingo = document.getElementById("linkedinlink");
-            linkedingo.href = linkedinLink;
-            linkedingo.style.display = "block";
-          } else {
-            document.getElementById("linkedinlink").style.display = "none";
-          }
+        let educactionList = parsedBody["AllEducation"];
+        console.log("educactionList", educactionList);
+        let education1;
+        if (
+          educactionList != null &&
+          educactionList != undefined &&
+          educactionList != ""
+        ) {
+          console.log(educactionList);
+          if (educactionList.length > 0) {
+            education1 = educactionList[0].education;
 
-          if (
-            facebookLink != null &&
-            facebookLink != "" &&
-            facebookLink != undefined
-          ) {
-            document.getElementById("socialmediahold").style.display = "flex";
-            let facebookgo = document.getElementById("facebooklink");
-            facebookgo.href = facebookLink;
-            facebookgo.style.display = "block";
-          } else {
-            document.getElementById("facebooklink").style.display = "none";
-          }
+            let allEducationWrapperMobile = document.getElementById(
+              "all-education-mobile"
+            );
+            let allEducationWrapperLargeS = document.getElementById(
+              "all-education-large-s"
+            );
+            allEducationWrapperMobile.innerHTML = "";
+            allEducationWrapperLargeS.innerHTML = "";
+            if (
+              education1 != null &&
+              education1 != undefined &&
+              education1 != "null" &&
+              education1 != ""
+            ) {
+              for (let eachEducation in educactionList) {
+                const educationWrap = document.createElement("div");
+                educationWrap.classList.add("educationwrap");
+                let educationText = educactionList[eachEducation].education;
+                if (
+                  educationText != null &&
+                  (educationText != undefined) & (educationText != "null") &&
+                  educationText != ""
+                ) {
+                  educationdisplay = document.createElement("p");
+                  educationdisplay.classList.add("educationtexts");
+                  educationdisplay.innerText = educationText;
+                  educationWrap.append(educationdisplay);
+                }
 
-          if (
-            instagramLink != null &&
-            instagramLink != "" &&
-            instagramLink != undefined
-          ) {
-            document.getElementById("socialmediahold").style.display = "flex";
-            let instagramgo = document.getElementById("instagramlink");
-            instagramgo.href = twitterLink;
-            instagramgo.style.display = "block";
-          } else {
-            document.getElementById("instagramlink").style.display = "none";
-          }
+                let educationDegree = educactionList[eachEducation].degree;
 
-          let freeconsult = parsedBody["free consultation"];
-          if (
-            freeconsult == null ||
-            freeconsult == undefined ||
-            freeconsult == ""
-          ) {
-            freeconsult = "yes";
-          }
+                let educationInfo;
+                if (
+                  educationDegree != null &&
+                  educationDegree != undefined &&
+                  educationDegree != "null" &&
+                  educationDegree != ""
+                ) {
+                  educationInfo = document.createElement("div");
+                  educationInfo.classList.add("edu-info");
 
-          let probono = parsedBody["community pro bono work"];
-          if (probono == null || probono == undefined || probono == "") {
-            probono = "yes";
-          }
+                  degreedisplay = document.createElement("p");
+                  degreedisplay.classList.add("edu-degree");
+                  degreedisplay.innerText = educationDegree;
+                  educationInfo.append(degreedisplay);
+                }
 
-          let contingency = parsedBody["offer contingency"];
-          if (
-            contingency == null ||
-            contingency == undefined ||
-            contingency == ""
-          ) {
-            contingency = "yes";
-          }
+                let educationStartDate =
+                  educactionList[eachEducation]["start date"];
+                let educationEndDate =
+                  educactionList[eachEducation]["end date"];
 
-          if (freeconsult == "yes") {
-            document.getElementById("free-consult-yes").style.display = "flex";
-            document.getElementById("free-consult-no").style.display = "none";
-          } else {
-            document.getElementById("free-consult-yes").style.display = "none";
-            document.getElementById("free-consult-no").style.display = "flex";
-          }
-
-          if (probono == "yes") {
-            document.getElementById("cpbw-yes").style.display = "flex";
-            document.getElementById("cpbw-no").style.display = "none";
-          } else {
-            document.getElementById("cpbw-yes").style.display = "none";
-            document.getElementById("cpbw-no").style.display = "flex";
-          }
-
-          if (contingency == "yes") {
-            document.getElementById("offer-cg-yes").style.display = "flex";
-            document.getElementById("offer-cg-no").style.display = "none";
-          } else {
-            document.getElementById("offer-cg-yes").style.display = "none";
-            document.getElementById("offer-cg-no").style.display = "flex";
-          }
-
-          // To do
-          // document.getElementById("freeconsultation-large-s").innerText =
-          //   freeconsult;
-          // document.getElementById("freeconsultation-mobile").innerText =
-          //   freeconsult;
-          // document.getElementById("probono-large-s").innerText = probono;
-          // document.getElementById("probono-mobile").innerText = probono;
-          // document.getElementById("offercontingency-large-s").innerText =
-          //   contingency;
-          // document.getElementById("offercontingency-mobile").innerText =
-          //   contingency;
-
-          const expertholderLargeS = document.getElementById(
-            "expertisewrap-large-s"
-          );
-          expertholderLargeS.innerHTML = "";
-          const expertholderMobile = document.getElementById(
-            "expertisewrap-mobile"
-          );
-          expertholderMobile.innerHTML = "";
-
-          let theexpertise = parsedBody["area of expertise"];
-          if (theexpertise.length > 0) {
-            for (let eachexpertise in theexpertise) {
-              const expertcontainer = document.createElement("div");
-              expertcontainer.classList.add("expertisecontainer");
-              let expertText = theexpertise[eachexpertise];
-              expertcontainer.innerText = capitalizeWords(expertText);
-
-              const expertContainerClone = expertcontainer.cloneNode(true);
-              expertholderLargeS.append(expertcontainer);
-              expertholderMobile.append(expertContainerClone);
-            }
-          } else {
-            document.getElementById(
-              "area-expertise-section-mobile"
-            ).style.display = "none";
-            document.getElementById(
-              "area-expertise-section-large-s"
-            ).style.display = "none";
-          }
-
-          let thehobbies = parsedBody["interests and hobbies"];
-          let hobbiesContainer = document.getElementById("interestshobbies");
-          hobbiesContainer.innerHTML = "";
-
-          if (
-            thehobbies != null &&
-            thehobbies != undefined &&
-            thehobbies != "" &&
-            thehobbies.length > 0
-          ) {
-            for (let eachhobby in thehobbies) {
-              hobbyholder = document.createElement("div");
-              hobbyholder.classList.add("expertisecontainer");
-              let hobbyText = thehobbies[eachhobby].title;
-              hobbyholder.innerText = capitalizeWords(hobbyText);
-              hobbiesContainer.append(hobbyholder);
-            }
-          } else {
-            document.getElementById("interest-hobby-section").style.display =
-              "none";
-          }
-
-          let educactionList = parsedBody["AllEducation"];
-          console.log("educactionList", educactionList);
-          let education1;
-          if (
-            educactionList != null &&
-            educactionList != undefined &&
-            educactionList != ""
-          ) {
-            console.log(educactionList);
-            if (educactionList.length > 0) {
-              education1 = educactionList[0].education;
-
-              let allEducationWrapperMobile = document.getElementById(
-                "all-education-mobile"
-              );
-              let allEducationWrapperLargeS = document.getElementById(
-                "all-education-large-s"
-              );
-              allEducationWrapperMobile.innerHTML = "";
-              allEducationWrapperLargeS.innerHTML = "";
-              if (
-                education1 != null &&
-                education1 != undefined &&
-                education1 != "null" &&
-                education1 != ""
-              ) {
-                for (let eachEducation in educactionList) {
-                  const educationWrap = document.createElement("div");
-                  educationWrap.classList.add("educationwrap");
-                  let educationText = educactionList[eachEducation].education;
-                  if (
-                    educationText != null &&
-                    (educationText != undefined) & (educationText != "null") &&
-                    educationText != ""
-                  ) {
-                    educationdisplay = document.createElement("p");
-                    educationdisplay.classList.add("educationtexts");
-                    educationdisplay.innerText = educationText;
-                    educationWrap.append(educationdisplay);
-                  }
-
-                  let educationDegree = educactionList[eachEducation].degree;
-
-                  let educationInfo;
-                  if (
-                    educationDegree != null &&
-                    educationDegree != undefined &&
-                    educationDegree != "null" &&
-                    educationDegree != ""
-                  ) {
+                if (educationStartDate != "" && educationEndDate != "") {
+                  if (!educationInfo) {
                     educationInfo = document.createElement("div");
                     educationInfo.classList.add("edu-info");
-
-                    degreedisplay = document.createElement("p");
-                    degreedisplay.classList.add("edu-degree");
-                    degreedisplay.innerText = educationDegree;
-                    educationInfo.append(degreedisplay);
                   }
 
-                  let educationStartDate =
-                    educactionList[eachEducation]["start date"];
-                  let educationEndDate =
-                    educactionList[eachEducation]["end date"];
+                  let timePeriod = document.createElement("p");
+                  timePeriod.classList.add("edu-time");
+                  // Parse dates and format them as "MMM YYYY"
+                  const formatDate = (dateString) => {
+                    if (!dateString) return "";
+                    const date = new Date(dateString);
+                    if (isNaN(date.getTime())) return dateString; // Return original if invalid
 
-                  if (educationStartDate != "" && educationEndDate != "") {
-                    if (!educationInfo) {
-                      educationInfo = document.createElement("div");
-                      educationInfo.classList.add("edu-info");
-                    }
+                    const month = date.toLocaleString("en-US", {
+                      month: "short",
+                    });
+                    const year = date.getFullYear();
+                    return `${month} ${year}`;
+                  };
 
-                    let timePeriod = document.createElement("p");
-                    timePeriod.classList.add("edu-time");
-                    // Parse dates and format them as "MMM YYYY"
-                    const formatDate = (dateString) => {
-                      if (!dateString) return "";
-                      const date = new Date(dateString);
-                      if (isNaN(date.getTime())) return dateString; // Return original if invalid
+                  const startDate = educactionList[eachEducation]["start date"];
+                  const endDate = educactionList[eachEducation]["end date"];
 
-                      const month = date.toLocaleString("en-US", {
-                        month: "short",
-                      });
-                      const year = date.getFullYear();
-                      return `${month} ${year}`;
-                    };
-
-                    const startDate =
-                      educactionList[eachEducation]["start date"];
-                    const endDate = educactionList[eachEducation]["end date"];
-
-                    if (startDate && endDate) {
-                      timePeriod.innerText =
-                        formatDate(startDate) + " - " + formatDate(endDate);
-                      educationInfo.append(timePeriod);
-                    }
+                  if (startDate && endDate) {
+                    timePeriod.innerText =
+                      formatDate(startDate) + " - " + formatDate(endDate);
                     educationInfo.append(timePeriod);
                   }
-
-                  educationInfo ? educationWrap.append(educationInfo) : null;
-
-                  const educationWrapClone = educationWrap.cloneNode(true);
-
-                  // Append to both containers
-                  allEducationWrapperMobile.appendChild(educationWrap);
-                  allEducationWrapperLargeS.appendChild(educationWrapClone);
+                  educationInfo.append(timePeriod);
                 }
-              }
-            } else {
-              console.log("No education found");
-              document.getElementById(
-                "education-section-mobile"
-              ).style.display = "none";
 
-              document.getElementById(
-                "education-section-large-s"
-              ).style.display = "none";
+                educationInfo ? educationWrap.append(educationInfo) : null;
+
+                const educationWrapClone = educationWrap.cloneNode(true);
+
+                // Append to both containers
+                allEducationWrapperMobile.appendChild(educationWrap);
+                allEducationWrapperLargeS.appendChild(educationWrapClone);
+              }
             }
           } else {
             console.log("No education found");
             document.getElementById("education-section-mobile").style.display =
               "none";
+
             document.getElementById("education-section-large-s").style.display =
               "none";
           }
+        } else {
+          console.log("No education found");
+          document.getElementById("education-section-mobile").style.display =
+            "none";
+          document.getElementById("education-section-large-s").style.display =
+            "none";
+        }
 
-          let dynamicBio = parsedBody["dynamic bio"];
-          if (
-            dynamicBio == null ||
-            dynamicBio == "null" ||
-            dynamicBio == undefined ||
-            dynamicBio == "" ||
-            dynamicBio == "\n"
-          ) {
-            // Hide both desktop and mobile biography containers
-            document.getElementById("biography-container").style.display =
-              "none";
-            document.getElementById("biography-container-mob").style.display =
-              "none";
-          } else {
-            // Set content for both desktop and mobile bio text elements
-            document.getElementById("biotext").innerHTML = dynamicBio;
-            document.getElementById("biotext-mob").innerHTML = dynamicBio;
-          }
+        let dynamicBio = parsedBody["dynamic bio"];
+        if (
+          dynamicBio == null ||
+          dynamicBio == "null" ||
+          dynamicBio == undefined ||
+          dynamicBio == "" ||
+          dynamicBio == "\n"
+        ) {
+          // Hide both desktop and mobile biography containers
+          document.getElementById("biography-container").style.display = "none";
+          document.getElementById("biography-container-mob").style.display =
+            "none";
+        } else {
+          // Set content for both desktop and mobile bio text elements
+          document.getElementById("biotext").innerHTML = dynamicBio;
+          document.getElementById("biotext-mob").innerHTML = dynamicBio;
+        }
 
-          let certificates = parsedBody["certificates"];
-          if (
-            certificates != null &&
-            certificates != "" &&
-            certificates != "null" &&
-            certificates != undefined
-          ) {
-            console.log(certificates);
-            if (certificates.length > 0) {
-              let certicateContainer =
-                document.getElementById("certificate-swiper");
-              certicateContainer.innerHTML = "";
-              certicateContainer.classList.add("swiper", "certificate-swiper");
-              certicateContainer.style.cssText = `width: 100%; overflow: hidden;`;
-
-              // Create navigation buttons
-              const prevBtn = document.createElement("div");
-              prevBtn.className = "swiper-button-prev cert-nav-btn";
-              prevBtn.style.display = "none"; // Hide by default
-
-              const nextBtn = document.createElement("div");
-              nextBtn.className = "swiper-button-next cert-nav-btn";
-              nextBtn.style.display = "none"; // Hide by default
-
-              // Create pagination
-              const pagination = document.createElement("div");
-              pagination.className = "swiper-pagination";
-
-              let firstCert = certificates[0];
-              if (
-                firstCert != null &&
-                firstCert != undefined &&
-                firstCert != "null" &&
-                firstCert != ""
-              ) {
-                const swiperWrapper = document.createElement("div");
-                swiperWrapper.classList.add("swiper-wrapper");
-
-                // Add each certificate as a slide
-                for (let eachcert in certificates) {
-                  const swiperSlide = document.createElement("div");
-                  swiperSlide.classList.add("swiper-slide");
-                  swiperSlide.style.cssText = `width: auto; flex-shrink: 0; padding: 0 10px;`;
-
-                  let imageContainer = document.createElement("div");
-                  imageContainer.classList.add("img-wrap-2");
-
-                  let certimage = document.createElement("img");
-                  certimage.classList.add("cert-image");
-                  certimage.src = certificates[eachcert].url;
-                  certimage.style.width = "auto";
-
-                  imageContainer.append(certimage);
-                  swiperSlide.append(imageContainer);
-                  swiperWrapper.append(swiperSlide);
-                }
-                certicateContainer.append(
-                  prevBtn,
-                  nextBtn,
-                  swiperWrapper,
-                  pagination
-                );
-
-                function updateNavVisibility() {
-                  if (window.innerWidth >= 1024) {
-                    prevBtn.style.display = "block";
-                    nextBtn.style.display = "block";
-                  } else {
-                    prevBtn.style.display = "none";
-                    nextBtn.style.display = "none";
-                  }
-                }
-
-                window.addEventListener("resize", updateNavVisibility);
-                updateNavVisibility();
-
-                // Initialize Swiper after DOM is fully loaded
-                loadSwiperJS().then(() => {
-                  new Swiper(certicateContainer, {
-                    spaceBetween: 16,
-                    slidesOffsetAfter: 30,
-                    centeredSlides: false,
-                    pagination: {
-                      el: pagination,
-                      clickable: true,
-                    },
-                    navigation: {
-                      nextEl: nextBtn,
-                      prevEl: prevBtn,
-                    },
-                    // Disable swiping on desktop, enable on mobile
-                    allowTouchMove: window.innerWidth < 1024,
-                    breakpoints: {
-                      0: {
-                        slidesPerView: 1,
-                        spaceBetween: 16,
-                        allowTouchMove: true,
-                        centeredSlides: false,
-                        slidesOffsetAfter: 0,
-                      },
-                      768: {
-                        slidesPerView: 2,
-                        spaceBetween: 15,
-                        allowTouchMove: true,
-                      },
-                      1024: {
-                        slidesPerView: 1,
-                        allowTouchMove: false,
-                        centeredSlides: true, // Center the single slide
-                        slidesOffsetAfter: 0, // Remove offset for true centering
-                      },
-                    },
-                    on: {
-                      touchStart: function () {
-                        this.el.style.transition = "none";
-                      },
-                      touchEnd: function () {
-                        this.el.style.transition = "";
-                      },
-                    },
-                  });
-                });
-              } else {
-                document.getElementById("certificatethehold").style.display ==
-                  "none";
-              }
-            } else {
-              document.getElementById("certificatethehold").style.display =
-                "none";
-            }
-          } else {
-            document.getElementById("certificatethehold").style.display =
-              "none";
-          }
-
-          let theuserLanguages = parsedBody["languages"];
-          let languagecontainer = document.getElementById(
-            "thelanguagecontainer"
-          );
-          languagecontainer.innerHTML = "";
-
-          if (
-            theuserLanguages != null &&
-            theuserLanguages != undefined &&
-            theuserLanguages != "" &&
-            theuserLanguages.length > 0
-          ) {
-            for (let userlang in theuserLanguages) {
-              langholder = document.createElement("div");
-              langholder.classList.add("eng");
-              flagImage = document.createElement("img");
-              flagImage.classList.add("flagsimage");
-              flagImage.src = theuserLanguages[userlang].image;
-              languagetext = document.createElement("p");
-              languagetext.classList.add("countrytext");
-              languagetext.innerText =
-                theuserLanguages[userlang].value.charAt(0).toUpperCase() +
-                theuserLanguages[userlang].value.slice(1);
-              langholder.append(flagImage, languagetext);
-              languagecontainer.append(langholder);
-            }
-          } else {
-            document.getElementById("language-main-section").style.display =
-              "none";
-            document.getElementById("sectionmap").style.width = "100%";
-          }
-
-          let videoIntroduction = parsedBody["profile video"];
-          console.log("🖼️🖼️🖼️🖼️🖼️", videoIntroduction);
-          if (
-            videoIntroduction != null &&
-            videoIntroduction != undefined &&
-            videoIntroduction != "null" &&
-            videoIntroduction != ""
-          ) {
-            console.log("🖼️🖼️🖼️🖼️🖼️", videoIntroduction);
-            const videoIntroductionElement =
-              document.getElementById("theprofilevideo");
-            videoIntroductionElement.src = videoIntroduction.url;
-            videoIntroductionElement.poster = videoIntroduction.thumbnail;
-            setupVideoControls(videoIntroductionElement);
-            // Show controls only after user interacts (click/tap/focus)
-
-            videoIntroductionElement.preload = "auto"; // Ensure video is preloaded
-            videoIntroductionElement.muted = true;
-
-            // Auto-play/pause profile video based on visibility
-            const videoObserver = new IntersectionObserver(
-              (entries, observer) => {
-                entries.forEach((entry) => {
-                  const video = entry.target;
-                  if (entry.isIntersecting) {
-                    video.play().catch(() => {
-                      // Auto-play might be blocked by browser
-                      console.warn(
-                        "Issue with auto-playing video, trying to play on user interaction."
-                      );
-                    });
-                  } else {
-                    video.pause();
-                  }
-                });
-              },
-              {
-                threshold: 0.5, // Play when at least 30% visible
-              }
-            );
-
-            videoObserver.observe(videoIntroductionElement);
-          } else {
-            document.getElementById("profile-video-section").style.display =
-              "none";
-          }
-
-          // Helper function to generate poster from first frame
-          let notableCaseWins = parsedBody["notable case wins"];
-          let notablecasewinscontainer = document.getElementById(
-            "notablecasewinscontainer"
-          );
-          notablecasewinscontainer.innerHTML = "";
-
-          if (
-            notableCaseWins != null &&
-            notableCaseWins != undefined &&
-            notableCaseWins != "" &&
-            notableCaseWins.length > 0
-          ) {
-            notablecasewinscontainer.classList.add(
-              "swiper",
-              "case-card-wrap",
-              "case-card-custom",
-              "case-card-wrap-custom"
-            );
+        let certificates = parsedBody["certificates"];
+        if (
+          certificates != null &&
+          certificates != "" &&
+          certificates != "null" &&
+          certificates != undefined
+        ) {
+          console.log(certificates);
+          if (certificates.length > 0) {
+            let certicateContainer =
+              document.getElementById("certificate-swiper");
+            certicateContainer.innerHTML = "";
+            certicateContainer.classList.add("swiper", "certificate-swiper");
+            certicateContainer.style.cssText = `width: 100%; overflow: hidden;`;
 
             // Create navigation buttons
             const prevBtn = document.createElement("div");
-            prevBtn.className = "swiper-button-prev cases-nav-btn";
+            prevBtn.className = "swiper-button-prev cert-nav-btn";
             prevBtn.style.display = "none"; // Hide by default
 
             const nextBtn = document.createElement("div");
-            nextBtn.className = "swiper-button-next cases-nav-btn";
+            nextBtn.className = "swiper-button-next cert-nav-btn";
             nextBtn.style.display = "none"; // Hide by default
 
             // Create pagination
             const pagination = document.createElement("div");
             pagination.className = "swiper-pagination";
 
-            let swiperWrapper = document.createElement("div");
-            swiperWrapper.classList.add("swiper-wrapper", "case-win-swip");
-            notablecasewinscontainer.style.cssText = `width: 100%;`;
+            let firstCert = certificates[0];
+            if (
+              firstCert != null &&
+              firstCert != undefined &&
+              firstCert != "null" &&
+              firstCert != ""
+            ) {
+              const swiperWrapper = document.createElement("div");
+              swiperWrapper.classList.add("swiper-wrapper");
 
-            for (let eachcase in notableCaseWins) {
-              let caseWinDiv = document.createElement("div");
-              caseWinDiv.classList.add(
-                "swiper-slide",
-                "crd",
-                "crd-cutom-width"
+              // Add each certificate as a slide
+              for (let eachcert in certificates) {
+                const swiperSlide = document.createElement("div");
+                swiperSlide.classList.add("swiper-slide");
+                swiperSlide.style.cssText = `width: auto; flex-shrink: 0; padding: 0 10px;`;
+
+                let imageContainer = document.createElement("div");
+                imageContainer.classList.add("img-wrap-2");
+
+                let certimage = document.createElement("img");
+                certimage.classList.add("cert-image");
+                certimage.src = certificates[eachcert].url;
+                certimage.style.width = "auto";
+
+                imageContainer.append(certimage);
+                swiperSlide.append(imageContainer);
+                swiperWrapper.append(swiperSlide);
+              }
+              certicateContainer.append(
+                prevBtn,
+                nextBtn,
+                swiperWrapper,
+                pagination
               );
 
-              const caseContent = document.createElement("div");
-              caseContent.classList.add("pv-case-content");
-              let caseHeading = document.createElement("h4");
-              caseHeading.classList.add("notable-case-heading");
-              caseHeading.innerText = notableCaseWins[eachcase].title;
-              caseContent.append(caseHeading);
-              let caseText = document.createElement("p");
-              let readmoreBtn = document.createElement("button");
-              readmoreBtn.className = "toggle-readmore";
-              readmoreBtn.textContent = "Read more";
-              caseText.classList.add("notablecasewintext");
-              caseText.innerText = notableCaseWins[eachcase].description;
-              caseContent.append(caseText);
-              caseContent.append(readmoreBtn);
-              caseWinDiv.append(caseContent);
-              swiperWrapper.append(caseWinDiv);
-            }
-            notablecasewinscontainer.append(
-              prevBtn,
-              nextBtn,
-              swiperWrapper,
-              pagination
-            );
+              function updateNavVisibility() {
+                if (window.innerWidth >= 1024) {
+                  prevBtn.style.display = "block";
+                  nextBtn.style.display = "block";
+                } else {
+                  prevBtn.style.display = "none";
+                  nextBtn.style.display = "none";
+                }
+              }
 
-            document
-              .querySelectorAll(".toggle-readmore")
-              .forEach((toggleBtn) => {
-                const textBlock = toggleBtn.previousElementSibling;
+              window.addEventListener("resize", updateNavVisibility);
+              updateNavVisibility();
 
-                toggleBtn.addEventListener("click", (e) => {
-                  e.stopPropagation();
-                  textBlock.classList.toggle("expanded");
-                  toggleBtn.textContent = textBlock.classList.contains(
-                    "expanded"
-                  )
-                    ? "Read less"
-                    : "Read more";
+              // Initialize Swiper after DOM is fully loaded
+              loadSwiperJS().then(() => {
+                new Swiper(certicateContainer, {
+                  spaceBetween: 16,
+                  slidesOffsetAfter: 30,
+                  centeredSlides: false,
+                  pagination: {
+                    el: pagination,
+                    clickable: true,
+                  },
+                  navigation: {
+                    nextEl: nextBtn,
+                    prevEl: prevBtn,
+                  },
+                  // Disable swiping on desktop, enable on mobile
+                  allowTouchMove: window.innerWidth < 1024,
+                  breakpoints: {
+                    0: {
+                      slidesPerView: 1,
+                      spaceBetween: 16,
+                      allowTouchMove: true,
+                      centeredSlides: false,
+                      slidesOffsetAfter: 0,
+                    },
+                    768: {
+                      slidesPerView: 2,
+                      spaceBetween: 15,
+                      allowTouchMove: true,
+                    },
+                    1024: {
+                      slidesPerView: 1,
+                      allowTouchMove: false,
+                      centeredSlides: true, // Center the single slide
+                      slidesOffsetAfter: 0, // Remove offset for true centering
+                    },
+                  },
+                  on: {
+                    touchStart: function () {
+                      this.el.style.transition = "none";
+                    },
+                    touchEnd: function () {
+                      this.el.style.transition = "";
+                    },
+                  },
                 });
               });
-
-            // Show/hide nav buttons based on screen size
-            function updateNavVisibility() {
-              if (window.innerWidth >= 1024) {
-                prevBtn.style.display = "block";
-                nextBtn.style.display = "block";
-              } else {
-                prevBtn.style.display = "none";
-                nextBtn.style.display = "none";
-              }
+            } else {
+              document.getElementById("certificatethehold").style.display ==
+                "none";
             }
-            window.addEventListener("resize", updateNavVisibility);
-            updateNavVisibility();
+          } else {
+            document.getElementById("certificatethehold").style.display =
+              "none";
+          }
+        } else {
+          document.getElementById("certificatethehold").style.display = "none";
+        }
 
+        let theuserLanguages = parsedBody["languages"];
+        let languagecontainer = document.getElementById("thelanguagecontainer");
+        languagecontainer.innerHTML = "";
+
+        if (
+          theuserLanguages != null &&
+          theuserLanguages != undefined &&
+          theuserLanguages != "" &&
+          theuserLanguages.length > 0
+        ) {
+          for (let userlang in theuserLanguages) {
+            langholder = document.createElement("div");
+            langholder.classList.add("eng");
+            flagImage = document.createElement("img");
+            flagImage.classList.add("flagsimage");
+            flagImage.src = theuserLanguages[userlang].image;
+            languagetext = document.createElement("p");
+            languagetext.classList.add("countrytext");
+            languagetext.innerText =
+              theuserLanguages[userlang].value.charAt(0).toUpperCase() +
+              theuserLanguages[userlang].value.slice(1);
+            langholder.append(flagImage, languagetext);
+            languagecontainer.append(langholder);
+          }
+        } else {
+          document.getElementById("language-main-section").style.display =
+            "none";
+          document.getElementById("sectionmap").style.width = "100%";
+        }
+
+        let videoIntroduction = parsedBody["profile video"];
+        console.log("🖼️🖼️🖼️🖼️🖼️", videoIntroduction);
+        if (
+          videoIntroduction != null &&
+          videoIntroduction != undefined &&
+          videoIntroduction != "null" &&
+          videoIntroduction != ""
+        ) {
+          console.log("🖼️🖼️🖼️🖼️🖼️", videoIntroduction);
+          const videoIntroductionElement =
+            document.getElementById("theprofilevideo");
+          videoIntroductionElement.src = videoIntroduction.url;
+          videoIntroductionElement.poster = videoIntroduction.thumbnail;
+          setupVideoControls(videoIntroductionElement);
+          // Show controls only after user interacts (click/tap/focus)
+
+          videoIntroductionElement.preload = "auto"; // Ensure video is preloaded
+          videoIntroductionElement.muted = true;
+
+          // Auto-play/pause profile video based on visibility
+          const videoObserver = new IntersectionObserver(
+            (entries, observer) => {
+              entries.forEach((entry) => {
+                const video = entry.target;
+                if (entry.isIntersecting) {
+                  video.play().catch(() => {
+                    // Auto-play might be blocked by browser
+                    console.warn(
+                      "Issue with auto-playing video, trying to play on user interaction."
+                    );
+                  });
+                } else {
+                  video.pause();
+                }
+              });
+            },
+            {
+              threshold: 0.5, // Play when at least 30% visible
+            }
+          );
+
+          videoObserver.observe(videoIntroductionElement);
+        } else {
+          document.getElementById("profile-video-section").style.display =
+            "none";
+        }
+
+        // Helper function to generate poster from first frame
+        let notableCaseWins = parsedBody["notable case wins"];
+        let notablecasewinscontainer = document.getElementById(
+          "notablecasewinscontainer"
+        );
+        notablecasewinscontainer.innerHTML = "";
+
+        if (
+          notableCaseWins != null &&
+          notableCaseWins != undefined &&
+          notableCaseWins != "" &&
+          notableCaseWins.length > 0
+        ) {
+          notablecasewinscontainer.classList.add(
+            "swiper",
+            "case-card-wrap",
+            "case-card-custom",
+            "case-card-wrap-custom"
+          );
+
+          // Create navigation buttons
+          const prevBtn = document.createElement("div");
+          prevBtn.className = "swiper-button-prev cases-nav-btn";
+          prevBtn.style.display = "none"; // Hide by default
+
+          const nextBtn = document.createElement("div");
+          nextBtn.className = "swiper-button-next cases-nav-btn";
+          nextBtn.style.display = "none"; // Hide by default
+
+          // Create pagination
+          const pagination = document.createElement("div");
+          pagination.className = "swiper-pagination";
+
+          let swiperWrapper = document.createElement("div");
+          swiperWrapper.classList.add("swiper-wrapper", "case-win-swip");
+          notablecasewinscontainer.style.cssText = `width: 100%;`;
+
+          for (let eachcase in notableCaseWins) {
+            let caseWinDiv = document.createElement("div");
+            caseWinDiv.classList.add("swiper-slide", "crd", "crd-cutom-width");
+
+            const caseContent = document.createElement("div");
+            caseContent.classList.add("pv-case-content");
+            let caseHeading = document.createElement("h4");
+            caseHeading.classList.add("notable-case-heading");
+            caseHeading.innerText = notableCaseWins[eachcase].title;
+            caseContent.append(caseHeading);
+            let caseText = document.createElement("p");
+            let readmoreBtn = document.createElement("button");
+            readmoreBtn.className = "toggle-readmore";
+            readmoreBtn.textContent = "Read more";
+            caseText.classList.add("notablecasewintext");
+            caseText.innerText = notableCaseWins[eachcase].description;
+            caseContent.append(caseText);
+            caseContent.append(readmoreBtn);
+            caseWinDiv.append(caseContent);
+            swiperWrapper.append(caseWinDiv);
+          }
+          notablecasewinscontainer.append(
+            prevBtn,
+            nextBtn,
+            swiperWrapper,
+            pagination
+          );
+
+          document.querySelectorAll(".toggle-readmore").forEach((toggleBtn) => {
+            const textBlock = toggleBtn.previousElementSibling;
+
+            toggleBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              textBlock.classList.toggle("expanded");
+              toggleBtn.textContent = textBlock.classList.contains("expanded")
+                ? "Read less"
+                : "Read more";
+            });
+          });
+
+          // Show/hide nav buttons based on screen size
+          function updateNavVisibility() {
+            if (window.innerWidth >= 1024) {
+              prevBtn.style.display = "block";
+              nextBtn.style.display = "block";
+            } else {
+              prevBtn.style.display = "none";
+              nextBtn.style.display = "none";
+            }
+          }
+          window.addEventListener("resize", updateNavVisibility);
+          updateNavVisibility();
+
+          loadSwiperJS().then(() => {
+            new Swiper(notablecasewinscontainer, {
+              spaceBetween: 16,
+              centeredSlides: false,
+              pagination: {
+                el: pagination,
+                clickable: true,
+              },
+              navigation: {
+                nextEl: nextBtn,
+                prevEl: prevBtn,
+              },
+              allowTouchMove: window.innerWidth < 1024,
+              breakpoints: {
+                320: {
+                  slidesPerView: 1,
+                  allowTouchMove: true,
+                  centeredSlides: false,
+                  slidesOffsetAfter: 0,
+                  spaceBetween: 15,
+                },
+                768: {
+                  slidesPerView: 2,
+                  spaceBetween: 15,
+                  allowTouchMove: true,
+                },
+                1024: {
+                  slidesPerView: 1,
+                  allowTouchMove: false,
+                  centeredSlides: true, // Center the single slide
+                  slidesOffsetAfter: 0, // Remove offset for true centering
+                },
+              },
+              on: {
+                touchStart: function () {
+                  this.el.style.transition = "none";
+                },
+                touchEnd: function () {
+                  this.el.style.transition = "";
+                },
+              },
+            });
+          });
+        } else {
+          document.getElementById("sectioncasewins").style.display = "none";
+        }
+
+        let clientTestimonials = parsedBody["client video testimonials"];
+        let clientTestimonialContainer =
+          document.getElementById("testimonialholder");
+        clientTestimonialContainer.innerHTML = "";
+
+        if (
+          clientTestimonials != null &&
+          clientTestimonials != undefined &&
+          clientTestimonials != "" &&
+          clientTestimonials.length > 0
+        ) {
+          clientTestimonialContainer.classList.add(
+            "swiper",
+            "testmonial-container"
+          );
+          clientTestimonialContainer.style.cssText = `width: 100%;`;
+
+          let swiperWrapper = document.createElement("div");
+          swiperWrapper.classList.add("swiper-wrapper");
+
+          let max = clientTestimonials.length;
+          if (clientTestimonials.length > 3) {
+            max = 3;
+          }
+          for (i = 0; i <= max - 1; i++) {
+            let slide = document.createElement("div");
+            slide.classList.add(
+              "swiper-slide",
+              "testimonial-video-wrap",
+              "sdas"
+            );
+            let testimonialVideo = document.createElement("video");
+            testimonialVideo.classList.add("testimonial-video");
+            testimonialVideo.setAttribute(
+              "data-src",
+              clientTestimonials[i].url
+            );
+            testimonialVideo.src = clientTestimonials[i].url;
+            setupVideoControls(testimonialVideo);
+            testimonialVideo.preload = "auto";
+            testimonialVideo.playsInline = true;
+            testimonialVideo.poster = clientTestimonials[i].thumbnail;
+            slide.append(testimonialVideo);
+            swiperWrapper.append(slide);
+          }
+
+          clientTestimonialContainer.append(swiperWrapper);
+          if (window.innerWidth > 1024) {
             loadSwiperJS().then(() => {
-              new Swiper(notablecasewinscontainer, {
-                spaceBetween: 16,
-                centeredSlides: false,
-                pagination: {
-                  el: pagination,
-                  clickable: true,
-                },
-                navigation: {
-                  nextEl: nextBtn,
-                  prevEl: prevBtn,
-                },
-                allowTouchMove: window.innerWidth < 1024,
+              new Swiper(clientTestimonialContainer, {
+                spaceBetween: 25,
                 breakpoints: {
                   320: {
                     slidesPerView: 1,
-                    allowTouchMove: true,
-                    centeredSlides: false,
-                    slidesOffsetAfter: 0,
-                    spaceBetween: 15,
+                    spaceBetween: 0,
+                  },
+                  1024: {
+                    slidesPerView: 3,
+                    spaceBetween: 25,
+                  },
+                },
+              });
+            });
+          } else if (window.innerWidth < 1024) {
+            loadSwiperJS().then(() => {
+              new Swiper(clientTestimonialContainer, {
+                slidesPerView: 1,
+                spaceBetween: 15,
+                slidesOffsetAfter: 20,
+                centeredSlides: true,
+                shortSwipes: true,
+
+                freeMode: false,
+                touchStartPreventDefault: false,
+                preventClicks: false,
+                preventClicksPropagation: false,
+                allowTouchMove: true,
+                simulateTouch: true,
+
+                resistance: true,
+                resistanceRatio: 0.5,
+                breakpoints: {
+                  320: {
+                    slidesPerView: 1,
+                    spaceBetween: 0,
                   },
                   768: {
                     slidesPerView: 2,
@@ -792,10 +877,148 @@ document.addEventListener("DOMContentLoaded", async function () {
                     allowTouchMove: true,
                   },
                   1024: {
+                    slidesPerView: 3,
+                    spaceBetween: 25,
+                  },
+                },
+
+                on: {
+                  touchStart: function () {
+                    this.el.style.transition = "none";
+                  },
+                  touchEnd: function () {
+                    this.el.style.transition = "";
+                  },
+                  // slideChange: function () {
+                  //   // Stop all videos when sliding
+                  //   const videos = this.el.querySelectorAll("video");
+                  //   videos.forEach((video) => {
+                  //     video.pause();
+                  //   });
+                  // },
+                },
+              });
+            });
+
+            const firstVideo =
+              clientTestimonialContainer.querySelector("video");
+            if (firstVideo) {
+              firstVideo.muted = true; // Ensure muted for autoplay
+
+              const swiperObserver = new IntersectionObserver(
+                (entries) => {
+                  entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                      firstVideo.play().catch(() => {
+                        // Auto-play might be blocked by browser
+                        console.warn(
+                          "Issue with auto-playing video, trying to play on user interaction."
+                        );
+                      });
+                    } else {
+                      firstVideo.pause();
+                    }
+                  });
+                },
+                { threshold: 0.5 }
+              );
+              swiperObserver.observe(clientTestimonialContainer);
+            }
+          }
+        } else {
+          document.getElementById("sectiontestimonials").style.display = "none";
+        }
+
+        // Call the setup function
+        setupMediaAndPress(parsedBody);
+
+        let thecasestudies = parsedBody["case study walkthroughs"];
+        let videocaseslider = document.getElementById("caseStudyHolder");
+        videocaseslider.innerHTML = "";
+
+        if (
+          thecasestudies != null &&
+          thecasestudies != "" &&
+          thecasestudies != undefined &&
+          thecasestudies.length > 0
+        ) {
+          videocaseslider.classList.add(
+            "swiper",
+            "case-study-container",
+            "media-swiper"
+          );
+          videocaseslider.style.cssText = `width: 100%;`;
+
+          let swiperWrapper = document.createElement("div");
+          swiperWrapper.classList.add("swiper-wrapper");
+
+          for (let eachcase in thecasestudies) {
+            let caseSlide = document.createElement("div");
+            caseSlide.classList.add("swiper-slide", "case-study-video-wrap");
+            let caseVideo = document.createElement("video");
+            caseVideo.classList.add("case-study-video");
+            caseVideo.src = thecasestudies[eachcase].url;
+            caseVideo.poster = thecasestudies[eachcase].thumbnail;
+            setupVideoControls(caseVideo);
+            caseVideo.preload = "metadata";
+            caseVideo.playsInline = true;
+            caseSlide.append(caseVideo);
+            swiperWrapper.append(caseSlide);
+          }
+          videocaseslider.append(swiperWrapper);
+          if (window.innerWidth > 1024) {
+            loadSwiperJS().then(() => {
+              new Swiper(videocaseslider, {
+                spaceBetween: 25,
+                breakpoints: {
+                  320: {
                     slidesPerView: 1,
-                    allowTouchMove: false,
-                    centeredSlides: true, // Center the single slide
-                    slidesOffsetAfter: 0, // Remove offset for true centering
+                    spaceBetween: 0,
+                  },
+                  768: {
+                    slidesPerView: 2,
+                    spaceBetween: 15,
+                    allowTouchMove: true,
+                  },
+                  1024: {
+                    slidesPerView: 3,
+                    spaceBetween: 25,
+                  },
+                },
+              });
+            });
+          } else if (window.innerWidth < 1024) {
+            loadSwiperJS().then(() => {
+              new Swiper(videocaseslider, {
+                slidesPerView: 1,
+                spaceBetween: 0,
+                slidesOffsetAfter: 20,
+                centeredSlides: true,
+                shortSwipes: true,
+
+                freeMode: false,
+                touchStartPreventDefault: false,
+                preventClicks: false,
+                preventClicksPropagation: false,
+                allowTouchMove: true,
+                simulateTouch: true,
+
+                resistance: true,
+                resistanceRatio: 0.5,
+
+                breakpoints: {
+                  320: {
+                    slidesPerView: 1,
+                    spaceBetween: 0,
+                  },
+                  768: {
+                    slidesPerView: 2,
+                    spaceBetween: 15,
+                    allowTouchMove: true,
+                  },
+                  1024: {
+                    slidesPerView: 3,
+                    spaceBetween: 25,
                   },
                 },
                 on: {
@@ -805,415 +1028,197 @@ document.addEventListener("DOMContentLoaded", async function () {
                   touchEnd: function () {
                     this.el.style.transition = "";
                   },
+                  // slideChange: function () {
+                  //   // Stop all videos when sliding
+                  //   const videos = this.el.querySelectorAll("video");
+                  //   videos.forEach((video) => {
+                  //     video.pause();
+                  //   });
+                  // },
                 },
               });
             });
-          } else {
-            document.getElementById("sectioncasewins").style.display = "none";
-          }
 
-          let clientTestimonials = parsedBody["client video testimonials"];
-          let clientTestimonialContainer =
-            document.getElementById("testimonialholder");
-          clientTestimonialContainer.innerHTML = "";
+            const firstVideo = videocaseslider.querySelector("video");
+            if (firstVideo) {
+              firstVideo.muted = true; // Ensure muted for autoplay
 
-          if (
-            clientTestimonials != null &&
-            clientTestimonials != undefined &&
-            clientTestimonials != "" &&
-            clientTestimonials.length > 0
-          ) {
-            clientTestimonialContainer.classList.add(
-              "swiper",
-              "testmonial-container"
-            );
-            clientTestimonialContainer.style.cssText = `width: 100%;`;
-
-            let swiperWrapper = document.createElement("div");
-            swiperWrapper.classList.add("swiper-wrapper");
-
-            let max = clientTestimonials.length;
-            if (clientTestimonials.length > 3) {
-              max = 3;
-            }
-            for (i = 0; i <= max - 1; i++) {
-              let slide = document.createElement("div");
-              slide.classList.add(
-                "swiper-slide",
-                "testimonial-video-wrap",
-                "sdas"
+              const swiperObserver = new IntersectionObserver(
+                (entries) => {
+                  entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                      firstVideo.play().catch(() => {
+                        // Auto-play might be blocked by browser
+                        console.warn(
+                          "Issue with auto-playing video, trying to play on user interaction."
+                        );
+                      });
+                    } else {
+                      firstVideo.pause();
+                    }
+                  });
+                },
+                { threshold: 0.5 }
               );
-              let testimonialVideo = document.createElement("video");
-              testimonialVideo.classList.add("testimonial-video");
-              testimonialVideo.setAttribute(
-                "data-src",
-                clientTestimonials[i].url
-              );
-              testimonialVideo.src = clientTestimonials[i].url;
-              setupVideoControls(testimonialVideo);
-              testimonialVideo.preload = "auto";
-              testimonialVideo.playsInline = true;
-              testimonialVideo.poster = clientTestimonials[i].thumbnail;
-              slide.append(testimonialVideo);
-              swiperWrapper.append(slide);
+              swiperObserver.observe(videocaseslider);
             }
-
-            clientTestimonialContainer.append(swiperWrapper);
-            if (window.innerWidth > 1024) {
-              loadSwiperJS().then(() => {
-                new Swiper(clientTestimonialContainer, {
-                  spaceBetween: 25,
-                  breakpoints: {
-                    320: {
-                      slidesPerView: 1,
-                      spaceBetween: 0,
-                    },
-                    1024: {
-                      slidesPerView: 3,
-                      spaceBetween: 25,
-                    },
-                  },
-                });
-              });
-            } else if (window.innerWidth < 1024) {
-              loadSwiperJS().then(() => {
-                new Swiper(clientTestimonialContainer, {
-                  slidesPerView: 1,
-                  spaceBetween: 15,
-                  slidesOffsetAfter: 20,
-                  centeredSlides: true,
-                  shortSwipes: true,
-
-                  freeMode: false,
-                  touchStartPreventDefault: false,
-                  preventClicks: false,
-                  preventClicksPropagation: false,
-                  allowTouchMove: true,
-                  simulateTouch: true,
-
-                  resistance: true,
-                  resistanceRatio: 0.5,
-                  breakpoints: {
-                    320: {
-                      slidesPerView: 1,
-                      spaceBetween: 0,
-                    },
-                    768: {
-                      slidesPerView: 2,
-                      spaceBetween: 15,
-                      allowTouchMove: true,
-                    },
-                    1024: {
-                      slidesPerView: 3,
-                      spaceBetween: 25,
-                    },
-                  },
-
-                  on: {
-                    touchStart: function () {
-                      this.el.style.transition = "none";
-                    },
-                    touchEnd: function () {
-                      this.el.style.transition = "";
-                    },
-                    // slideChange: function () {
-                    //   // Stop all videos when sliding
-                    //   const videos = this.el.querySelectorAll("video");
-                    //   videos.forEach((video) => {
-                    //     video.pause();
-                    //   });
-                    // },
-                  },
-                });
-              });
-
-              const firstVideo =
-                clientTestimonialContainer.querySelector("video");
-              if (firstVideo) {
-                firstVideo.muted = true; // Ensure muted for autoplay
-
-                const swiperObserver = new IntersectionObserver(
-                  (entries) => {
-                    entries.forEach((entry) => {
-                      if (entry.isIntersecting) {
-                        firstVideo.play().catch(() => {
-                          // Auto-play might be blocked by browser
-                          console.warn(
-                            "Issue with auto-playing video, trying to play on user interaction."
-                          );
-                        });
-                      } else {
-                        firstVideo.pause();
-                      }
-                    });
-                  },
-                  { threshold: 0.5 }
-                );
-                swiperObserver.observe(clientTestimonialContainer);
-              }
-            }
-          } else {
-            document.getElementById("sectiontestimonials").style.display =
-              "none";
           }
+        } else {
+          document.getElementById("sectioncasestudy").style.display = "none";
+        }
 
-          // Call the setup function
-          setupMediaAndPress(parsedBody);
+        // let blogs = blogsJson;
+        // let themainblogcontainer =
+        //   document.getElementById("mainblogscontainer");
+        // themainblogcontainer.innerHTML = "";
 
-          let thecasestudies = parsedBody["case study walkthroughs"];
-          let videocaseslider = document.getElementById("caseStudyHolder");
-          videocaseslider.innerHTML = "";
+        // if (
+        //   blogs != null &&
+        //   blogs != "" &&
+        //   blogs != undefined &&
+        //   blogs.length > 0
+        // ) {
+        //   for (let blog in blogsJson) {
+        //     blogslide = document.createElement("div");
+        //     blogslide.classList.add("slide-img", "2ni", "w-slide");
+        //     blogslide.style.maxWidth = "300px";
+        //     blogcontainer = document.createElement("div");
+        //     blogcontainer.classList.add("img-wrap", "blogsnew");
+        //     theembed = document.createElement("div");
+        //     theembed.classList.add("code-embed-45", "w-embed");
 
-          if (
-            thecasestudies != null &&
-            thecasestudies != "" &&
-            thecasestudies != undefined &&
-            thecasestudies.length > 0
-          ) {
-            videocaseslider.classList.add(
-              "swiper",
-              "case-study-container",
-              "media-swiper"
-            );
-            videocaseslider.style.cssText = `width: 100%;`;
+        //     const previewArticle =
+        //       document.createElement("previewbox-article");
 
-            let swiperWrapper = document.createElement("div");
-            swiperWrapper.classList.add("swiper-wrapper");
+        //     previewArticle.setAttribute(
+        //       "style",
+        //       "--pb-background-color: #ffffff; --pb-background-color-hover: #4a4a4a; --pb-text-color: white; --pb-text-color-light: #1f1f1f;"
+        //     );
 
-            for (let eachcase in thecasestudies) {
-              let caseSlide = document.createElement("div");
-              caseSlide.classList.add("swiper-slide", "case-study-video-wrap");
-              let caseVideo = document.createElement("video");
-              caseVideo.classList.add("case-study-video");
-              caseVideo.src = thecasestudies[eachcase].url;
-              caseVideo.poster = thecasestudies[eachcase].thumbnail;
-              setupVideoControls(caseVideo);
-              caseVideo.preload = "metadata";
-              caseVideo.playsInline = true;
-              caseSlide.append(caseVideo);
-              swiperWrapper.append(caseSlide);
-            }
-            videocaseslider.append(swiperWrapper);
-            if (window.innerWidth > 1024) {
-              loadSwiperJS().then(() => {
-                new Swiper(videocaseslider, {
-                  spaceBetween: 25,
-                  breakpoints: {
-                    320: {
-                      slidesPerView: 1,
-                      spaceBetween: 0,
-                    },
-                    768: {
-                      slidesPerView: 2,
-                      spaceBetween: 15,
-                      allowTouchMove: true,
-                    },
-                    1024: {
-                      slidesPerView: 3,
-                      spaceBetween: 25,
-                    },
-                  },
-                });
-              });
-            } else if (window.innerWidth < 1024) {
-              loadSwiperJS().then(() => {
-                new Swiper(videocaseslider, {
-                  slidesPerView: 1,
-                  spaceBetween: 0,
-                  slidesOffsetAfter: 20,
-                  centeredSlides: true,
-                  shortSwipes: true,
+        //     previewArticle.setAttribute(
+        //       "href",
+        //       "https://web-highlights.com/about"
+        //     );
 
-                  freeMode: false,
-                  touchStartPreventDefault: false,
-                  preventClicks: false,
-                  preventClicksPropagation: false,
-                  allowTouchMove: true,
-                  simulateTouch: true,
+        //     // Append it to the body or any container
+        //     theembed.append(previewArticle);
+        //     blogcontainer.appendChild(theembed);
+        //     blogslide.append(blogcontainer);
+        //     themainblogcontainer.append(blogslide);
+        //   }
+        // } else {
+        //   document.getElementById("sectionblogs").style.display = "none";
+        // }
+        let theQAs = parsedBody["personal qa"];
+        let thequizcontainer = document.getElementById("qanaswercontainer");
+        thequizcontainer.innerHTML = "";
 
-                  resistance: true,
-                  resistanceRatio: 0.5,
+        if (
+          theQAs != null &&
+          theQAs != "" &&
+          theQAs != undefined &&
+          theQAs.length > 0
+        ) {
+          for (let eachQa in theQAs) {
+            const theqacontainer = document.createElement("div");
+            theqacontainer.classList.add("accordion-item-c");
+            theqacontainer.setAttribute("trackno", eachQa);
+            theqaheader = document.createElement("div");
+            theqaheader.classList.add("accordion-btn-c");
+            theqaheader.setAttribute("trackno", eachQa);
+            theqaheadertext = document.createElement("p");
+            theqaheadertext.classList.add("text-block-60-c");
+            console.log(theQAs[eachQa].title);
+            theqaheadertext.innerText = theQAs[eachQa].title;
+            theqaheadertext.setAttribute("trackno", eachQa);
+            thearrow = document.createElement("img");
+            thearrow.classList.add("accordionclose");
+            thearrow.setAttribute("trackno", eachQa);
+            thearrow.src =
+              "https://cdn.prod.website-files.com/67e360f08a15ef65d8814b41/6803540aab416829b3f3556e_arrow-down.svg";
+            qaBody = document.createElement("div");
+            qaBody.classList.add("accordion-body-c");
+            qaBody.setAttribute("trackno", eachQa);
+            qaanswer = document.createElement("p");
+            qaanswer.classList.add("para-2c");
+            qaanswer.innerText = theQAs[eachQa].description;
 
-                  breakpoints: {
-                    320: {
-                      slidesPerView: 1,
-                      spaceBetween: 0,
-                    },
-                    768: {
-                      slidesPerView: 2,
-                      spaceBetween: 15,
-                      allowTouchMove: true,
-                    },
-                    1024: {
-                      slidesPerView: 3,
-                      spaceBetween: 25,
-                    },
-                  },
-                  on: {
-                    touchStart: function () {
-                      this.el.style.transition = "none";
-                    },
-                    touchEnd: function () {
-                      this.el.style.transition = "";
-                    },
-                    // slideChange: function () {
-                    //   // Stop all videos when sliding
-                    //   const videos = this.el.querySelectorAll("video");
-                    //   videos.forEach((video) => {
-                    //     video.pause();
-                    //   });
-                    // },
-                  },
-                });
-              });
-
-              const firstVideo = videocaseslider.querySelector("video");
-              if (firstVideo) {
-                firstVideo.muted = true; // Ensure muted for autoplay
-
-                const swiperObserver = new IntersectionObserver(
-                  (entries) => {
-                    entries.forEach((entry) => {
-                      if (entry.isIntersecting) {
-                        firstVideo.play().catch(() => {
-                          // Auto-play might be blocked by browser
-                          console.warn(
-                            "Issue with auto-playing video, trying to play on user interaction."
-                          );
-                        });
-                      } else {
-                        firstVideo.pause();
-                      }
-                    });
-                  },
-                  { threshold: 0.5 }
-                );
-                swiperObserver.observe(videocaseslider);
-              }
-            }
-          } else {
-            document.getElementById("sectioncasestudy").style.display = "none";
+            theqaheader.append(theqaheadertext, thearrow);
+            qaBody.append(qaanswer);
+            theqacontainer.append(theqaheader, qaBody);
+            theqacontainer.addEventListener("click", accordionClicked);
+            thequizcontainer.append(theqacontainer);
           }
+        } else {
+          document.getElementById("sectionsfaq").style.display = "none";
+        }
 
-          // let blogs = blogsJson;
-          // let themainblogcontainer =
-          //   document.getElementById("mainblogscontainer");
-          // themainblogcontainer.innerHTML = "";
+        document.getElementById("thepageloader").style.display = "none";
+        if (window.Webflow && Webflow.require) {
+          Webflow.require("slider").ready();
+        }
 
-          // if (
-          //   blogs != null &&
-          //   blogs != "" &&
-          //   blogs != undefined &&
-          //   blogs.length > 0
-          // ) {
-          //   for (let blog in blogsJson) {
-          //     blogslide = document.createElement("div");
-          //     blogslide.classList.add("slide-img", "2ni", "w-slide");
-          //     blogslide.style.maxWidth = "300px";
-          //     blogcontainer = document.createElement("div");
-          //     blogcontainer.classList.add("img-wrap", "blogsnew");
-          //     theembed = document.createElement("div");
-          //     theembed.classList.add("code-embed-45", "w-embed");
+        resolve("Profile setup complete");
+      });
 
-          //     const previewArticle =
-          //       document.createElement("previewbox-article");
-
-          //     previewArticle.setAttribute(
-          //       "style",
-          //       "--pb-background-color: #ffffff; --pb-background-color-hover: #4a4a4a; --pb-text-color: white; --pb-text-color-light: #1f1f1f;"
-          //     );
-
-          //     previewArticle.setAttribute(
-          //       "href",
-          //       "https://web-highlights.com/about"
-          //     );
-
-          //     // Append it to the body or any container
-          //     theembed.append(previewArticle);
-          //     blogcontainer.appendChild(theembed);
-          //     blogslide.append(blogcontainer);
-          //     themainblogcontainer.append(blogslide);
-          //   }
-          // } else {
-          //   document.getElementById("sectionblogs").style.display = "none";
-          // }
-          let theQAs = parsedBody["personal qa"];
-          let thequizcontainer = document.getElementById("qanaswercontainer");
-          thequizcontainer.innerHTML = "";
-
-          if (
-            theQAs != null &&
-            theQAs != "" &&
-            theQAs != undefined &&
-            theQAs.length > 0
-          ) {
-            for (let eachQa in theQAs) {
-              const theqacontainer = document.createElement("div");
-              theqacontainer.classList.add("accordion-item-c");
-              theqacontainer.setAttribute("trackno", eachQa);
-              theqaheader = document.createElement("div");
-              theqaheader.classList.add("accordion-btn-c");
-              theqaheader.setAttribute("trackno", eachQa);
-              theqaheadertext = document.createElement("p");
-              theqaheadertext.classList.add("text-block-60-c");
-              console.log(theQAs[eachQa].title);
-              theqaheadertext.innerText = theQAs[eachQa].title;
-              theqaheadertext.setAttribute("trackno", eachQa);
-              thearrow = document.createElement("img");
-              thearrow.classList.add("accordionclose");
-              thearrow.setAttribute("trackno", eachQa);
-              thearrow.src =
-                "https://cdn.prod.website-files.com/67e360f08a15ef65d8814b41/6803540aab416829b3f3556e_arrow-down.svg";
-              qaBody = document.createElement("div");
-              qaBody.classList.add("accordion-body-c");
-              qaBody.setAttribute("trackno", eachQa);
-              qaanswer = document.createElement("p");
-              qaanswer.classList.add("para-2c");
-              qaanswer.innerText = theQAs[eachQa].description;
-
-              theqaheader.append(theqaheadertext, thearrow);
-              qaBody.append(qaanswer);
-              theqacontainer.append(theqaheader, qaBody);
-              theqacontainer.addEventListener("click", accordionClicked);
-              thequizcontainer.append(theqacontainer);
-            }
-          } else {
-            document.getElementById("sectionsfaq").style.display = "none";
-          }
-
-          document.getElementById("thepageloader").style.display = "none";
-          if (window.Webflow && Webflow.require) {
-            Webflow.require("slider").ready();
-          }
-
-          resolve("Profile setup complete");
+      // Handle the promise resolution
+      setupProfile
+        .then(() => {
+          // Hide the loader only after profile setup is complete
+          document.getElementById("loading-screen").style.display = "none";
+          document.getElementById("pv-page-wrapper").style.display = "block";
+        })
+        .catch((error) => {
+          console.error("Failed to setup profile:", error);
+          alert("Error loading lawyer profile preview");
+          // Still hide loader even if there's an error
+          document.getElementById("loading-screen").style.display = "none";
+          document.getElementById("pv-page-wrapper").style.display = "block";
         });
-
-        // Handle the promise resolution
-        setupProfile
-          .then(() => {
-            // Hide the loader only after profile setup is complete
-            document.getElementById("loading-screen").style.display = "none";
-            document.getElementById("pv-page-wrapper").style.display = "block";
-          })
-          .catch((error) => {
-            console.error("Failed to setup profile:", error);
-            alert("Error loading lawyer profile");
-            // Still hide loader even if there's an error
-            document.getElementById("loading-screen").style.display = "none";
-            document.getElementById("pv-page-wrapper").style.display = "block";
-          });
-      } else {
-        alert("No such lawyer profile");
-        document.getElementById("loading-screen").style.display = "none";
-        document.getElementById("pv-page-wrapper").style.display = "block";
-      }
-    } else {
-      alert("No such lawyer profile");
+    } catch (error) {
+      console.error("Error parsing preview data:", error);
+      alert("Error loading preview data");
+      document.getElementById("loading-screen").style.display = "none";
+      document.getElementById("pv-page-wrapper").style.display = "block";
     }
   } else {
-    alert("No such lawyer profile");
+    console.log("No preview data found, redirecting back to editor");
+    alert("No preview data found. Redirecting back to profile editor.");
+    // Redirect back to profile editor
+    window.history.back();
   }
+});
+
+// Clean up localStorage when page is about to be closed/refreshed
+window.addEventListener("beforeunload", function () {
+  cleanupPreviewData();
+});
+
+// Clean up localStorage when user navigates away
+window.addEventListener("pagehide", function () {
+  cleanupPreviewData();
+});
+
+// Clean up localStorage when window loses focus (user switches tabs/apps)
+// Only clean up after a significant delay to avoid cleaning up too quickly
+let blurTimeout;
+window.addEventListener("blur", function () {
+  blurTimeout = setTimeout(() => {
+    cleanupPreviewData();
+  }, 300000); // 5 minutes delay
+});
+
+// Cancel cleanup if user returns to the page
+window.addEventListener("focus", function () {
+  if (blurTimeout) {
+    clearTimeout(blurTimeout);
+    blurTimeout = null;
+  }
+});
+
+// Clean up when user closes the tab/window
+window.addEventListener("unload", function () {
+  cleanupPreviewData();
 });
 
 async function getUserById(userId) {
@@ -1626,4 +1631,83 @@ function setupVideoControls(videoElement) {
   videoElement.addEventListener("click", showControls);
   videoElement.addEventListener("focus", showControls);
   videoElement.addEventListener("touchstart", showControls);
+}
+
+// Function to clean up preview data from localStorage
+function cleanupPreviewData() {
+  localStorage.removeItem("lawggle_profile_preview");
+  localStorage.removeItem("lawggle_preview_email");
+  console.log("Preview data cleaned up from localStorage");
+}
+
+// Function to handle preview exit with user confirmation
+window.exitPreview = function () {
+  if (
+    confirm(
+      "Are you sure you want to exit the preview? This will return you to the profile editor."
+    )
+  ) {
+    cleanupPreviewData();
+    // Redirect back to profile editor or close window
+    window.history.back();
+  }
+};
+
+// Add exit preview button functionality if it exists
+document.addEventListener("DOMContentLoaded", function () {
+  const exitButton = document.getElementById("exit-preview-btn");
+  if (exitButton) {
+    exitButton.addEventListener("click", window.exitPreview);
+  }
+
+  // Add ESC key listener to exit preview
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      window.exitPreview();
+    }
+  });
+});
+
+// Check if we're in preview mode
+function isPreviewMode() {
+  return localStorage.getItem("lawggle_profile_preview") !== null;
+}
+
+// Get preview data
+function getPreviewData() {
+  const previewData = localStorage.getItem("lawggle_profile_preview");
+  return previewData ? JSON.parse(previewData) : null;
+}
+
+// Update preview data (if user makes changes in preview)
+function updatePreviewData(newData) {
+  localStorage.setItem("lawggle_profile_preview", JSON.stringify(newData));
+}
+
+// Add preview banner/notification
+function showPreviewBanner() {
+  const previewBanner = document.createElement("div");
+  previewBanner.id = "preview-banner";
+  previewBanner.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #f39c12;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+    z-index: 9999;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  `;
+  previewBanner.innerHTML = `
+    <span>🔍 PREVIEW MODE - This is a preview of your profile</span>
+    <button onclick="exitPreview()" style="background: white; color: #f39c12; border: none; padding: 5px 10px; margin-left: 15px; border-radius: 3px; cursor: pointer;">Exit Preview</button>
+  `;
+
+  document.body.insertBefore(previewBanner, document.body.firstChild);
+
+  // Adjust body padding to accommodate banner
+  document.body.style.paddingTop = "50px";
 }
