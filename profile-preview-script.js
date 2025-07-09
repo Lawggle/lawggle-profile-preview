@@ -9,9 +9,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   console.log("DOM fully loaded and parsed");
   console.log("Preview mode loading...");
 
-  // Show preview banner
-  showPreviewBanner();
-
   // Get preview data from localStorage
   const previewData = localStorage.getItem("lawggle_profile_preview");
 
@@ -1164,6 +1161,19 @@ document.addEventListener("DOMContentLoaded", async function () {
       // Handle the promise resolution
       setupProfile
         .then(() => {
+          // Show preview banner after profile is loaded
+          showPreviewBanner();
+
+          // Additional check to ensure banner is visible
+          setTimeout(() => {
+            const banner = document.getElementById("preview-banner");
+            if (banner) {
+              banner.style.display = "block";
+              banner.style.visibility = "visible";
+              console.log("Banner visibility ensured");
+            }
+          }, 500);
+
           // Hide the loader only after profile setup is complete
           document.getElementById("loading-screen").style.display = "none";
           document.getElementById("pv-page-wrapper").style.display = "block";
@@ -1686,28 +1696,99 @@ function updatePreviewData(newData) {
 
 // Add preview banner/notification
 function showPreviewBanner() {
+  // Check if banner already exists to avoid duplicates
+  if (document.getElementById("preview-banner")) {
+    return;
+  }
+
+  // Add CSS first
+  addBannerCSS();
+
   const previewBanner = document.createElement("div");
   previewBanner.id = "preview-banner";
-  previewBanner.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: #f39c12;
-    color: white;
-    padding: 10px;
-    text-align: center;
-    font-weight: bold;
-    z-index: 9999;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  `;
   previewBanner.innerHTML = `
     <span>🔍 PREVIEW MODE - This is a preview of your profile</span>
-    <button onclick="exitPreview()" style="background: white; color: #f39c12; border: none; padding: 5px 10px; margin-left: 15px; border-radius: 3px; cursor: pointer;">Exit Preview</button>
+    <button onclick="window.exitPreview()">Exit Preview</button>
   `;
 
   document.body.insertBefore(previewBanner, document.body.firstChild);
 
-  // Adjust body padding to accommodate banner
-  document.body.style.paddingTop = "50px";
+  console.log("Preview banner created and added to DOM");
+
+  // Ensure the banner stays on top
+  setTimeout(() => {
+    const banner = document.getElementById("preview-banner");
+    if (banner) {
+      banner.style.zIndex = "999999";
+      banner.style.display = "block";
+      banner.style.visibility = "visible";
+      console.log("Banner visibility confirmed");
+    }
+  }, 100);
 }
+
+// Add CSS to ensure banner is always visible
+function addBannerCSS() {
+  const style = document.createElement("style");
+  style.textContent = `
+    #preview-banner {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      background: #f39c12 !important;
+      color: white !important;
+      padding: 10px !important;
+      text-align: center !important;
+      font-weight: bold !important;
+      z-index: 999999 !important;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+      border: none !important;
+      margin: 0 !important;
+      height: auto !important;
+      display: block !important;
+      visibility: visible !important;
+      font-size: 14px !important;
+      line-height: 1.4 !important;
+    }
+    
+    #preview-banner button {
+      background: white !important;
+      color: #f39c12 !important;
+      border: none !important;
+      padding: 5px 10px !important;
+      margin-left: 15px !important;
+      border-radius: 3px !important;
+      cursor: pointer !important;
+      font-size: 12px !important;
+    }
+    
+    #preview-banner button:hover {
+      background: #f0f0f0 !important;
+    }
+    
+    body {
+      padding-top: 50px !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// Debug function to check banner visibility
+function checkBannerVisibility() {
+  const banner = document.getElementById("preview-banner");
+  if (banner) {
+    console.log(
+      "Banner exists and is visible:",
+      banner.style.display !== "none"
+    );
+    console.log("Banner z-index:", banner.style.zIndex);
+    console.log("Banner position:", banner.style.position);
+  } else {
+    console.log("Banner does not exist");
+  }
+}
+
+// Call this function after a delay to check banner status
+setTimeout(checkBannerVisibility, 2000);
